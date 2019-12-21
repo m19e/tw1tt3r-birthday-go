@@ -1,6 +1,7 @@
 package main
 
 import (
+  "github.com/gorilla/mux"
   "github.com/PuerkitoBio/goquery"
   "fmt"
   "net/http"
@@ -67,10 +68,37 @@ func handlerFollowing(w http.ResponseWriter, r *http.Request) {
   w.Write(res)
 }
 
+func BirthdayHandler(w http.ResponseWriter, r *http.Request) {
+  vars := mux.Vars(r)
+  sn := vars["id"]
+  url := "https://twitter.com/" + sn //任意のurl取れるように改造したい
+
+  fmt.Println(sn)
+
+  pagedata := GetPage(url, "誕生日")
+  pages := Pagedata{pagedata}
+
+  res, err := json.Marshal(pages)
+  fmt.Println(pages)
+
+  if err != nil {
+    http.Error(w, err.Error(), http.StatusInternalServerError)
+    return
+  }
+
+  //*は危険なので個別指定にしておくのが良さそう fixme
+  w.Header().Set("Access-Control-Allow-Origin", "*")
+
+  w.Header().Set("Content-Type", "application/json")
+  w.Write(res)
+}
+
 func main() {
-  http.HandleFunc("/", handlerBirthday)
-  http.HandleFunc("/following", handlerFollowing)
+  r := mux.NewRouter()
+  r.HandleFunc("/bd/{id}", BirthdayHandler)
+  //http.HandleFunc("/", handlerBirthday)
+  //http.HandleFunc("/following", handlerFollowing)
   
-  fmt.Printf("server is running\n 8080port")
-  http.ListenAndServe(":8080", nil)   // サーバーを起動するよ!
+  fmt.Printf("server is running\n8080port\n")
+  http.ListenAndServe(":8080", r)   // サーバーを起動するよ!
 }
