@@ -29,9 +29,14 @@ func main() {
 
 	v := url.Values{}
 	v.Set("count", "50")
+	v.Set("screen_name", "imassc_official")
+
+	//q := "ゆゆ式 -RT"
 	
-	result, _ := api.GetSearch("#ゆゆ式ac -RT", v)
-	for _, tweet := range result.Statuses {
-		f.Println(tweet.Text)
+	// result, _ := api.GetSearch("#ゆゆ式ac -RT", v)
+	result, _ := api.GetUserTimeline(v)
+	for _, tweet := range result {
+		f.Println("----------")
+		f.Println(tweet.FullText)
 	}
 }
