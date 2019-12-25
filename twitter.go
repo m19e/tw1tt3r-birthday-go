@@ -37,8 +37,24 @@ func GetTwitterApi() *anaconda.TwitterApi {
 	)
 }
 
-func GetFriendsId(id string, cnt int) []int {
-	return []int{1,2}
+func GetFriendsIdList(a *anaconda.TwitterApi, v url.Values) []int64 {
+	friends := make([]int64, 0)
+	friendsChan := a.GetFriendsIdsAll(v)
+
+friendsLoop:
+	for {
+		select {
+		case p, ok := <-friendsChan:
+			if ok {
+				for _, id := range p.Ids {
+					friends = append(friends, id)
+				}
+			} else {
+				break friendsLoop
+			}
+		}
+	}
+	return friends
 }
 
 func GetBirthday(sn string, target string) BDList {
@@ -54,8 +70,8 @@ func GetBirthday(sn string, target string) BDList {
 	return bdlist
 }
 
-func Separate(l []int, n int) chan []int {
-	ch := make(chan []int)
+func Chunks(l []int64, n int) chan []int64 {
+	ch := make(chan []int64)
 
 	go func() {
 		for i := 0; i < len(l); i += n {
@@ -77,26 +93,32 @@ func main() {
 	api := GetTwitterApi()
 
 	v := url.Values{}
-	v.Set("count", "50")
+	v.Set("count", "5000")
 	v.Set("screen_name", "imassc_official")
 
 	//q := "ゆゆ式 -RT"
 
 	// result, _ := api.GetSearch(q, v)
-	result, _ := api.GetUserTimeline(v)
-	for _, tweet := range result {
-		f.Println("----------")
-		f.Println(tweet.FullText)
-	}
+	//	result, _ := api.GetUserTimeline(v)
+	//	for _, tweet := range result {
+	//		f.Println("----------")
+	//		f.Println(tweet.FullText)
+	//	}
 
 	bd := GetBirthday("TwitterJP", "誕生日")
 	b, _ := json.Marshal(bd)
 	f.Printf("%s\n", b)
 
-	size := 3
-	digits := []int{5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5}
+	friends := GetFriendsIdList(api, v)
 
-	for l := range Separate(digits, size) {
+	f.Printf("length: %d\n", len(friends))
+	for _, n := range friends {
+		f.Println(n)
+	}
+
+	size := 100
+	for l := range Chunks(friends, size) {
+		f.Printf("length: %d\n", len(l))
 		f.Println(l)
 	}
 }
