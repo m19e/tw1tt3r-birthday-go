@@ -37,17 +37,38 @@ func GetTwitterApi() *anaconda.TwitterApi {
 	)
 }
 
-func GetBirthday(id string, target string) BDList {
+func GetFriendsId(id string, cnt int) []int {
+	return []int{1,2}
+}
+
+func GetBirthday(sn string, target string) BDList {
 	var bdlist BDList
-	doc, _ := goquery.NewDocument("https://twitter.com/" + id)
+	doc, _ := goquery.NewDocument("https://twitter.com/" + sn)
 	doc.Find("span").Each(func(_ int, s *goquery.Selection) {
 		elem := s.Text()
 		if strings.Contains(elem, target) {
 			e := strings.TrimSpace(elem)
-			bdlist = append(bdlist, BD{Name: id, Date: e})
+			bdlist = append(bdlist, BD{Name: sn, Date: e})
 		}
 	})
 	return bdlist
+}
+
+func Separate(l []int, n int) chan []int {
+	ch := make(chan []int)
+
+	go func() {
+		for i := 0; i < len(l); i += n {
+			from := i
+			to := i + n
+			if to > len(l) {
+				to = len(l)
+			}
+			ch <- l[from:to]
+		}
+		close(ch)
+	}()
+	return ch
 }
 
 func main() {
@@ -71,4 +92,11 @@ func main() {
 	bd := GetBirthday("TwitterJP", "誕生日")
 	b, _ := json.Marshal(bd)
 	f.Printf("%s\n", b)
+
+	size := 3
+	digits := []int{5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5}
+
+	for l := range Separate(digits, size) {
+		f.Println(l)
+	}
 }
