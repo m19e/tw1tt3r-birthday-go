@@ -37,9 +37,9 @@ func GetTwitterApi() *anaconda.TwitterApi {
 	)
 }
 
-func GetFriendsIdList(a *anaconda.TwitterApi, v url.Values) []int64 {
+func GetFriendsIdList(ids chan anaconda.FriendsIdsPage) []int64 {
 	friends := make([]int64, 0)
-	friendsChan := a.GetFriendsIdsAll(v)
+	friendsChan := ids
 
 friendsLoop:
 	for {
@@ -109,7 +109,9 @@ func main() {
 	b, _ := json.Marshal(bd)
 	f.Printf("%s\n", b)
 
-	friends := GetFriendsIdList(api, v)
+	ids := api.GetFriendsIdsAll(v)
+
+	friends := GetFriendsIdList(ids)
 
 	f.Printf("length: %d\n", len(friends))
 	for _, n := range friends {
