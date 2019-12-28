@@ -141,19 +141,6 @@ func main() {
 
 	size := 100
 	chunked := Chunks(friends, size)
-	for _, l := range chunked {
-	friends := GetFriendsIdList(api, v)
-
-	f.Printf("length: %d\n", len(friends))
-	for _, n := range friends {
-		f.Println(n)
-	}
-
-	size := 100
-	for l := range Chunks(friends, size) {
-		f.Printf("length: %d\n", len(l))
-		f.Println(l)
-	}
 
 	var users [][]anaconda.User
 	var wg sync.WaitGroup
@@ -175,8 +162,8 @@ func main() {
 
 	wg.Wait()
 
-	u, _ := json.Marshal(users)
-	f.Printf("%s\n", u)
+	// u, _ := json.Marshal(users)
+	// f.Printf("%s\n", u)
 
 	f.Printf("%s\n", users[0][0].Name)
 }
