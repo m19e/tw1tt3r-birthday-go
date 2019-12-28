@@ -41,15 +41,9 @@ func GetTwitterApi() *anaconda.TwitterApi {
 	)
 }
 
-<<<<<<< HEAD
 func GetFriendsIdList(ids chan anaconda.FriendsIdsPage) []int64 {
 	friends := make([]int64, 0)
 	friendsChan := ids
-=======
-func GetFriendsIdList(a *anaconda.TwitterApi, v url.Values) []int64 {
-	friends := make([]int64, 0)
-	friendsChan := a.GetFriendsIdsAll(v)
->>>>>>> 00ef824b2ca948a7eb2eca9220f3f675c09c55e5
 
 friendsLoop:
 	for {
@@ -99,13 +93,8 @@ func GetBirthday(sn string, target string) []BD {
 	return bdlist
 }
 
-<<<<<<< HEAD
 func Chunks(l []int64, n int) [][]int64 {
 	var result [][]int64
-=======
-func Chunks(l []int64, n int) chan []int64 {
-	ch := make(chan []int64)
->>>>>>> 00ef824b2ca948a7eb2eca9220f3f675c09c55e5
 
 	for i := 0; i < len(l); i += n {
 		from := i
@@ -128,8 +117,6 @@ func main() {
 	v.Set("count", "5000")
 	v.Set("screen_name", "imassc_official")
 
-<<<<<<< HEAD
-=======
 	//q := "ゆゆ式 -RT"
 
 	// result, _ := api.GetSearch(q, v)
@@ -139,12 +126,10 @@ func main() {
 	//		f.Println(tweet.FullText)
 	//	}
 
->>>>>>> 00ef824b2ca948a7eb2eca9220f3f675c09c55e5
 	bd := GetBirthday("TwitterJP", "誕生日")
 	b, _ := json.Marshal(bd)
 	f.Printf("%s\n", b)
 
-<<<<<<< HEAD
 	idsAll := api.GetFriendsIdsAll(v)
 
 	friends := GetFriendsIdList(idsAll)
@@ -157,7 +142,6 @@ func main() {
 	size := 100
 	chunked := Chunks(friends, size)
 	for _, l := range chunked {
-=======
 	friends := GetFriendsIdList(api, v)
 
 	f.Printf("length: %d\n", len(friends))
@@ -168,7 +152,6 @@ func main() {
 	size := 100
 	for l := range Chunks(friends, size) {
 		f.Printf("length: %d\n", len(l))
->>>>>>> 00ef824b2ca948a7eb2eca9220f3f675c09c55e5
 		f.Println(l)
 	}
 
