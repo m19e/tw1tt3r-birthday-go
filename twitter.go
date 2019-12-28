@@ -165,5 +165,13 @@ func main() {
 	// u, _ := json.Marshal(users)
 	// f.Printf("%s\n", u)
 
-	f.Printf("%s\n", users[0][0].Name)
+	// f.Printf("%s\n", users[0][0].Name)
+	for _, mas := range users {
+		for _, user := range mas {
+			bd := GetBirthday(user.ScreenName, "誕生日")
+			if len(bd) != 0 {
+				f.Printf("%s:%s\n", user.Name, bd[0])
+			}
+		}
+	}
 }
