@@ -1,5 +1,7 @@
 package main
 
+// TODO
+
 import (
 	"github.com/joho/godotenv"
 	//_ "github.com/joho/godotenv/autoload"
@@ -13,6 +15,7 @@ import (
 	. "os"
 	"strings"
 	"sync"
+	"time"
 )
 
 type User struct {
@@ -21,7 +24,7 @@ type User struct {
 }
 
 type BD struct {
-	USER User
+	User User
 	Date string
 }
 
@@ -61,36 +64,38 @@ friendsLoop:
 	return friends
 }
 
-// func GetAllUsersLookup(f func(), idsList [][]int64) [][]anaconda.User {
-// 	var users [][]anaconda.User
-// 	var wg sync.WaitGroup
-// 	v := url.Values{}
-// 	v.Set("include_entities", "false")
-
-// 	for _, ids := range idsList {
-// 		wg.Add(1)
-// 		go func(ids []int64) {
-// 			defer wg.Done()
-// 			res, _ := api.GetUsersLookupByIds(ids, v)
-// 			users = append(users, res)
-// 		}(ids)
-// 	}
-
-// 	wg.Wait()
-// 	return users
-// }
-
-func GetBirthday(sn string, target string) []BD {
-	var bdlist []BD
+func GetBirthday(sn string, target string) BD {
+	var bd BD
 	doc, _ := goquery.NewDocument("https://twitter.com/" + sn)
 	doc.Find("span").Each(func(_ int, s *goquery.Selection) {
 		elem := s.Text()
 		if strings.Contains(elem, target) {
 			e := strings.TrimSpace(elem)
-			bdlist = append(bdlist, BD{USER: User{SN: sn}, Date: e})
+			bd = BD{User: User{SN: sn}, Date: e}
 		}
 	})
-	return bdlist
+	return bd
+}
+
+func GetBirthdayAll(users []anaconda.User) chan BD {
+	// var bdList []BD
+	var wg sync.WaitGroup
+	ch := make(chan BD)
+
+	go func() {
+		for _, user := range users {
+			wg.Add(1)
+			go func(name string) {
+				ch <- GetBirthday(name, "誕生日")
+				wg.Done()
+			}(user.ScreenName)
+		}
+		wg.Wait()
+		close(ch)
+	}()
+
+	// return bdList
+	return ch
 }
 
 func Chunks(l []int64, n int) [][]int64 {
@@ -108,14 +113,28 @@ func Chunks(l []int64, n int) [][]int64 {
 	return result
 }
 
+func Flatten(double [][]anaconda.User) []anaconda.User {
+	var flat []anaconda.User
+
+	for _, single := range double {
+		for _, bd := range single {
+			flat = append(flat, bd)
+		}
+	}
+
+	return flat
+}
+
 func main() {
+	start := time.Now()
+
 	loadEnv()
 
 	api := GetTwitterApi()
 
 	v := url.Values{}
 	v.Set("count", "5000")
-	v.Set("screen_name", "imassc_official")
+	v.Set("screen_name", "imas_official")
 
 	//q := "ゆゆ式 -RT"
 
@@ -126,18 +145,13 @@ func main() {
 	//		f.Println(tweet.FullText)
 	//	}
 
-	bd := GetBirthday("TwitterJP", "誕生日")
-	b, _ := json.Marshal(bd)
-	f.Printf("%s\n", b)
+	// bd := GetBirthday("TwitterJP", "誕生日")
+	// b, _ := json.Marshal(bd)
+	// f.Printf("%s\n", b)
 
 	idsAll := api.GetFriendsIdsAll(v)
 
 	friends := GetFriendsIdList(idsAll)
-
-	f.Printf("length: %d\n", len(friends))
-	for _, n := range friends {
-		f.Println(n)
-	}
 
 	size := 100
 	chunked := Chunks(friends, size)
@@ -162,16 +176,25 @@ func main() {
 
 	wg.Wait()
 
-	// u, _ := json.Marshal(users)
-	// f.Printf("%s\n", u)
+	semi := Flatten(users)
 
-	// f.Printf("%s\n", users[0][0].Name)
-	for _, mas := range users {
-		for _, user := range mas {
-			bd := GetBirthday(user.ScreenName, "誕生日")
-			if len(bd) != 0 {
-				f.Printf("%s:%s\n", user.Name, bd[0])
-			}
+	// for _, user := range semi {
+	// 	bd := GetBirthday(user.ScreenName, "誕生日")
+	// 	f.Printf("%s:%s\n", user.Name, bd)
+	// }
+
+	final := GetBirthdayAll(semi)
+
+	for {
+		bd, ok := <-final
+		if !ok {
+			return
 		}
+		w, _ := json.Marshal(bd)
+		f.Printf("%s\n", w)
 	}
+
+	end := time.Now()
+
+	log.Printf("%f", (end.Sub(start).Seconds()))
 }
