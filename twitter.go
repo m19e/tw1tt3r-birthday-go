@@ -24,8 +24,9 @@ type User struct {
 }
 
 type BD struct {
-	User User
-	Date string
+	User  User
+	Date  string
+	Exist bool
 }
 
 func loadEnv() {
@@ -65,13 +66,13 @@ friendsLoop:
 }
 
 func GetBirthday(sn string, target string) BD {
-	var bd BD
+	var bd = BD{Exist: false}
 	doc, _ := goquery.NewDocument("https://twitter.com/" + sn)
 	doc.Find("span").Each(func(_ int, s *goquery.Selection) {
 		elem := s.Text()
 		if strings.Contains(elem, target) {
 			e := strings.TrimSpace(elem)
-			bd = BD{User: User{SN: sn}, Date: e}
+			bd = BD{User: User{SN: sn}, Date: e, Exist: true}
 		}
 	})
 	return bd
@@ -80,13 +81,16 @@ func GetBirthday(sn string, target string) BD {
 func GetBirthdayAll(users []anaconda.User) chan BD {
 	// var bdList []BD
 	var wg sync.WaitGroup
-	ch := make(chan BD)
+	ch := make(chan BD, 200)
 
 	go func() {
 		for _, user := range users {
 			wg.Add(1)
 			go func(name string) {
-				ch <- GetBirthday(name, "誕生日")
+				u := GetBirthday(name, "誕生日")
+				if u.Exist {
+					ch <- u
+				}
 				wg.Done()
 			}(user.ScreenName)
 		}
@@ -150,11 +154,14 @@ func main() {
 	// f.Printf("%s\n", b)
 
 	idsAll := api.GetFriendsIdsAll(v)
-
 	friends := GetFriendsIdList(idsAll)
+
+	f.Printf("\n%d\n", len(friends))
 
 	size := 100
 	chunked := Chunks(friends, size)
+
+	f.Printf("\n%d\n", len(chunked))
 
 	var users [][]anaconda.User
 	var wg sync.WaitGroup
@@ -163,7 +170,6 @@ func main() {
 
 	for _, ids := range chunked {
 		wg.Add(1)
-		log.Print(ids)
 		go func(ids []int64) {
 			defer wg.Done()
 			res, err := api.GetUsersLookupByIds(ids, p)
@@ -176,6 +182,7 @@ func main() {
 
 	wg.Wait()
 
+	// f.Printf("\n%d\n", len(users))
 	semi := Flatten(users)
 
 	// for _, user := range semi {
