@@ -81,20 +81,18 @@ func GetBirthdayAll(users []anaconda.User) chan BD {
 	var wg sync.WaitGroup
 	ch := make(chan BD, 200)
 
-	go func() {
-		for _, user := range users {
-			wg.Add(1)
-			go func(name string) {
-				u := GetBirthday(name, "誕生日")
-				if u.Exist {
-					ch <- u
-				}
-				wg.Done()
-			}(user.ScreenName)
-		}
-		wg.Wait()
-		close(ch)
-	}()
+	for _, user := range users {
+		wg.Add(1)
+		go func(name string) {
+			u := GetBirthday(name, "誕生日")
+			if u.Exist {
+				ch <- u
+			}
+			wg.Done()
+		}(user.ScreenName)
+	}
+	wg.Wait()
+	close(ch)
 
 	// return bdList
 	return ch
@@ -188,6 +186,8 @@ func main() {
 	// }
 
 	final := GetBirthdayAll(semi)
+
+	f.Printf("%d friends have Birthday\n", len(final))
 
 	for {
 		bd, ok := <-final
