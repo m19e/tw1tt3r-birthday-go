@@ -193,7 +193,7 @@ func main() {
 	for {
 		bd, ok := <-final
 		if !ok {
-			return
+			break
 		}
 		w, _ := json.Marshal(bd)
 		f.Printf("%s\n", w)
