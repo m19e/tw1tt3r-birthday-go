@@ -1,6 +1,4 @@
-package main
-
-// TODO
+package main // import "tw"
 
 import (
 	"github.com/joho/godotenv"
