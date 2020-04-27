@@ -129,6 +129,7 @@ func Flatten(double [][]anaconda.User) []anaconda.User {
 
 func main() {
 	start := time.Now()
+	log.Print("start")
 
 	loadEnv()
 
@@ -199,5 +200,5 @@ func main() {
 
 	end := time.Now()
 
-	log.Printf("%f", (end.Sub(start).Seconds()))
+	log.Printf("all processes finish in %f", (end.Sub(start).Seconds()))
 }
