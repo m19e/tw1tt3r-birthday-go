@@ -154,12 +154,10 @@ func main() {
 	idsAll := api.GetFriendsIdsAll(v)
 	friends := GetFriendsIdList(idsAll)
 
-	f.Printf("\n%d\n", len(friends))
+	f.Printf("%d friends\n", len(friends))
 
 	size := 100
 	chunked := Chunks(friends, size)
-
-	f.Printf("\n%d\n", len(chunked))
 
 	var users [][]anaconda.User
 	var wg sync.WaitGroup
